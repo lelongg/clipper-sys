@@ -1,0 +1,11 @@
+[package]
+name = "clipper-sys"
+version = "0.1.0"
+authors = ["Gérald Lelong <gerald.lelong@easymov.fr>"]
+edition = "2018"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.50"
+cmake = "0.1.40"
