@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+
 typedef enum ClipType
 {
     ctIntersection,
@@ -44,21 +46,21 @@ typedef cInt Vertice[2];
 typedef struct Path
 {
     Vertice* vertices;
-    int vertices_count;
+    size_t vertices_count;
     int closed;
 } Path;
 
 typedef struct Polygon
 {
     Path* paths;
-    int paths_count;
+    size_t paths_count;
     PolyType type;
 } Polygon;
 
 typedef struct Polygons
 {
     Polygon* polygons;
-    int polygons_count;
+    size_t polygons_count;
 } Polygons;
 
 Polygons execute(
