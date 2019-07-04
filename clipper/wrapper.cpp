@@ -1,5 +1,6 @@
 #include "wrapper.h"
 #include "clipper.hpp"
+#include <iostream>
 #include <queue>
 
 using ClipperLib::IntPoint;
@@ -34,40 +35,6 @@ void add_paths(ClipperLib::Clipper& c, const Polygons& polygons)
         auto& polygon = polygons.polygons[i];
         Paths paths = get_polygon_paths(polygon);
         c.AddPaths(paths, ClipperLib::PolyType(polygon.type), true);
-    }
-}
-
-void path_and_vertice_count(
-    const PolyTree& tree,
-    int& polygon_count,
-    int& path_count,
-    int& vertice_count)
-{
-    std::queue<const PolyNode*> node_queue;
-
-    for (const auto node : tree.Childs)
-    {
-        node_queue.push(node);
-    }
-
-    while (!node_queue.empty())
-    {
-        const auto node = node_queue.front();
-
-        for (const auto child : node->Childs)
-        {
-            for (const auto grand_child : child->Childs)
-            {
-                node_queue.push(grand_child);
-            }
-
-            vertice_count += child->Contour.size();
-            ++path_count;
-        }
-
-        vertice_count += node->Contour.size();
-        ++path_count;
-        ++polygon_count;
     }
 }
 
@@ -140,7 +107,7 @@ Polygons execute(
     add_paths(c, polygons);
     PolyTree solution;
     c.Execute(
-        ClipperLib::ClipType(ctIntersection), solution,
+        ClipperLib::ClipType(clip_type), solution,
         ClipperLib::PolyFillType(subject_fill_type),
         ClipperLib::PolyFillType(clip_fill_type));
     return get_polygons_from_tree(solution);

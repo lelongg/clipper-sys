@@ -1,5 +1,5 @@
 use super::{
-    execute, free_polygons, ClipType_ctIntersection, ClipType_ctUnion, Path,
+    execute, free_polygons, ClipType_ctDifference, ClipType_ctIntersection, ClipType_ctUnion, Path,
     PolyFillType_pftNonZero, PolyType_ptClip, PolyType_ptSubject, Polygon, Polygons,
 };
 
@@ -81,6 +81,75 @@ fn test_intersection_with_hole() {
     let result = unsafe {
         execute(
             ClipType_ctIntersection,
+            polygons,
+            PolyFillType_pftNonZero,
+            PolyFillType_pftNonZero,
+        )
+    };
+
+    assert_eq!(expected, result);
+    unsafe { free_polygons(result) };
+}
+
+#[test]
+fn test_difference() {
+    let polygons = Polygons {
+        polygons: [
+            Polygon {
+                type_: PolyType_ptSubject,
+                paths: [Path {
+                    vertices: [[180, 200], [260, 200], [260, 150], [180, 150]].as_mut_ptr(),
+                    vertices_count: 4,
+                    closed: 1,
+                }]
+                .as_mut_ptr(),
+                paths_count: 1,
+            },
+            Polygon {
+                type_: PolyType_ptClip,
+                paths: [Path {
+                    vertices: [[190, 210], [240, 210], [240, 130], [190, 130]].as_mut_ptr(),
+                    vertices_count: 4,
+                    closed: 1,
+                }]
+                .as_mut_ptr(),
+                paths_count: 1,
+            },
+        ]
+        .as_mut_ptr(),
+        polygons_count: 2,
+    };
+
+    let expected = Polygons {
+        polygons: [
+            Polygon {
+                type_: PolyType_ptSubject,
+                paths: [Path {
+                    vertices: [[190, 200], [180, 200], [180, 150], [190, 150]].as_mut_ptr(),
+                    vertices_count: 4,
+                    closed: 1,
+                }]
+                .as_mut_ptr(),
+                paths_count: 1,
+            },
+            Polygon {
+                type_: PolyType_ptSubject,
+                paths: [Path {
+                    vertices: [[260, 200], [240, 200], [240, 150], [260, 150]].as_mut_ptr(),
+                    vertices_count: 4,
+                    closed: 1,
+                }]
+                .as_mut_ptr(),
+                paths_count: 1,
+            },
+        ]
+        .as_mut_ptr(),
+        polygons_count: 2,
+    };
+
+    let result = unsafe {
+        execute(
+            ClipType_ctDifference,
             polygons,
             PolyFillType_pftNonZero,
             PolyFillType_pftNonZero,
