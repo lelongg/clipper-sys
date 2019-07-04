@@ -3,47 +3,37 @@
 #include <queue>
 
 using ClipperLib::IntPoint;
-using ClipperLib::Path;
 using ClipperLib::Paths;
 using ClipperLib::PolyNode;
 using ClipperLib::PolyTree;
 
-int get_polygon_paths(
-    const cInt* paths_vertices,
-    int paths_count,
-    const int* paths_sizes,
-    Paths& paths)
+ClipperLib::Path get_path(const Path& path)
 {
-    paths = Paths(paths_count);
-    int vertice_index = 0;
-    for (int i = 0; i < paths_count; ++i)
+    ClipperLib::Path clipper_path;
+    for (int i = 0; i < path.vertices_count; ++i)
     {
-        auto paths_size = paths_sizes[i];
-        for (int j = 0; j < paths_size; ++j)
-        {
-            paths[i] << IntPoint(
-                paths_vertices[vertice_index],
-                paths_vertices[vertice_index + 1]);
-            vertice_index += 2;
-        }
+        clipper_path << IntPoint(path.vertices[i][0], path.vertices[i][1]);
     }
-    return vertice_index;
+    return clipper_path;
+}
+
+Paths get_polygon_paths(const Polygon& polygon)
+{
+    Paths paths(polygon.paths_count);
+    for (int i = 0; i < polygon.paths_count; ++i)
+    {
+        paths[i] = get_path(polygon.paths[i]);
+    }
+    return paths;
 }
 
 void add_paths(ClipperLib::Clipper& c, const Polygons& polygons)
 {
-    int vertice_index = 0;
-    int path_index = 0;
-    for (int i = 0; i < polygons.count; ++i)
+    for (int i = 0; i < polygons.polygons_count; ++i)
     {
-        Paths paths;
-        vertice_index += get_polygon_paths(
-            polygons.paths_vertices + vertice_index, polygons.paths_count[i],
-            polygons.paths_sizes + path_index, paths);
-        c.AddPaths(
-            paths, ClipperLib::PolyType(polygons.paths_types[i]),
-            polygons.paths_closed[i]);
-        path_index += polygons.paths_count[i];
+        auto& polygon = polygons.polygons[i];
+        Paths paths = get_polygon_paths(polygon);
+        c.AddPaths(paths, ClipperLib::PolyType(polygon.type), true);
     }
 }
 
@@ -81,46 +71,44 @@ void path_and_vertice_count(
     }
 }
 
-void add_path_to_polygons(Polygons& polygons, const Path& path)
+Path get_path_from_node(const PolyNode& node)
 {
-    auto& vertice_index = polygons.vertices_count;
-    for (int i = 0; i < path.size(); ++i)
+    Path path;
+    path.vertices_count = node.Contour.size();
+    path.vertices = new Vertice[path.vertices_count];
+    path.closed = !node.IsOpen();
+    for (int i = 0; i < path.vertices_count; ++i)
     {
-        polygons.paths_vertices[vertice_index++] = path[i].X;
-        polygons.paths_vertices[vertice_index++] = path[i].Y;
+        path.vertices[i][0] = node.Contour[i].X;
+        path.vertices[i][1] = node.Contour[i].Y;
     }
-    polygons.paths_sizes[polygons.paths_count[polygons.count]++] = path.size();
+    return path;
 }
 
-void add_node_to_polygons(
-    Polygons& polygons,
-    const PolyNode* node,
-    std::queue<const PolyNode*>& node_queue)
+Polygon get_polygon_from_node(
+    const PolyNode* node, std::queue<const PolyNode*>& node_queue)
 {
-    int path_index = polygons.paths_count[polygons.count];
-    add_path_to_polygons(polygons, node->Contour);
-    polygons.paths_types[path_index] = ptSubject;
-    polygons.paths_closed[path_index] = !node->IsOpen();
-
-    for (const auto child : node->Childs)
+    Polygon polygon;
+    polygon.type = ptSubject;
+    polygon.paths_count = node->ChildCount() + 1;
+    polygon.paths = new Path[polygon.paths_count];
+    polygon.paths[0] = get_path_from_node(*node);
+    for (int i = 0; i < node->ChildCount(); ++i)
     {
-        int path_index = polygons.paths_count[polygons.count];
-        add_path_to_polygons(polygons, child->Contour);
-        polygons.paths_types[path_index] = ptSubject;
-        polygons.paths_closed[path_index] = !child->IsOpen();
-
+        auto child = node->Childs[i];
+        polygon.paths[i + 1] = get_path_from_node(*child);
         for (const auto grand_child : child->Childs)
         {
             node_queue.push(grand_child);
         }
     }
-
-    ++polygons.count;
+    return polygon;
 }
 
-Polygons add_tree_to_polygons(Polygons& polygons, const PolyTree& tree)
+Polygons get_polygons_from_tree(const PolyTree& tree)
 {
     std::queue<const PolyNode*> node_queue;
+    std::vector<Polygon> polygon_vector;
 
     for (const auto node : tree.Childs)
     {
@@ -131,23 +119,13 @@ Polygons add_tree_to_polygons(Polygons& polygons, const PolyTree& tree)
     {
         const auto node = node_queue.front();
         node_queue.pop();
-        add_node_to_polygons(polygons, node, node_queue);
+        polygon_vector.push_back(get_polygon_from_node(node, node_queue));
     }
-}
-
-Polygons tree_to_polygons(const PolyTree& tree)
-{
-    int polygon_count, path_count, vertice_count;
-    path_and_vertice_count(tree, polygon_count, path_count, vertice_count);
 
     Polygons polygons;
-    polygons.paths_vertices = new cInt[vertice_count];
-    polygons.paths_count = new int[polygon_count];
-    polygons.paths_sizes = new int[path_count];
-    polygons.paths_types = new PolyType[path_count];
-    polygons.paths_closed = new int[path_count];
-
-    add_tree_to_polygons(polygons, tree);
+    polygons.polygons_count = polygon_vector.size();
+    polygons.polygons = new Polygon[polygons.polygons_count];
+    std::copy(polygon_vector.begin(), polygon_vector.end(), polygons.polygons);
 
     return polygons;
 }
@@ -165,5 +143,28 @@ Polygons execute(
         ClipperLib::ClipType(ctIntersection), solution,
         ClipperLib::PolyFillType(subject_fill_type),
         ClipperLib::PolyFillType(clip_fill_type));
-    return tree_to_polygons(solution);
+    return get_polygons_from_tree(solution);
+}
+
+void free_path(Path path)
+{
+    delete[] path.vertices;
+}
+
+void free_polygon(Polygon polygon)
+{
+    for (int i = 0; i < polygon.paths_count; ++i)
+    {
+        free_path(polygon.paths[i]);
+    }
+    delete[] polygon.paths;
+}
+
+void free_polygons(Polygons polygons)
+{
+    for (int i = 0; i < polygons.polygons_count; ++i)
+    {
+        free_polygon(polygons.polygons[i]);
+    }
+    delete[] polygons.polygons;
 }

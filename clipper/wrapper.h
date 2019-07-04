@@ -39,15 +39,26 @@ typedef signed long long long64; // used by Int128 class
 typedef unsigned long long ulong64;
 #endif
 
+typedef cInt Vertice[2];
+
+typedef struct Path
+{
+    Vertice* vertices;
+    int vertices_count;
+    int closed;
+} Path;
+
+typedef struct Polygon
+{
+    Path* paths;
+    int paths_count;
+    PolyType type;
+} Polygon;
+
 typedef struct Polygons
 {
-    cInt* paths_vertices;
-    int vertices_count;
-    int count;
-    int* paths_count;
-    int* paths_sizes;
-    PolyType* paths_types;
-    int* paths_closed;
+    Polygon* polygons;
+    int polygons_count;
 } Polygons;
 
 Polygons execute(
@@ -55,6 +66,10 @@ Polygons execute(
     Polygons polygons,
     PolyFillType subject_fill_type,
     PolyFillType clip_fill_type);
+
+void free_path(Path path);
+void free_polygon(Polygon polygon);
+void free_polygons(Polygons polygons);
 
 #ifdef __cplusplus
 }
