@@ -15,7 +15,12 @@ fn main() {
     match (target_os.as_str(), target_env.as_str()) {
         ("linux", _) | ("windows", "gnu") => println!("cargo:rustc-link-lib=dylib=stdc++"),
         ("macos", _) => println!("cargo:rustc-link-lib=dylib=c++"),
-        _ => unimplemented!(),
+        ("windows", "msvc") => {}
+        _ => unimplemented!(
+            "target_os: {}, target_env: {}",
+            target_os.as_str(),
+            target_env.as_str()
+        ),
     }
 
     let bindings = bindgen::Builder::default()
