@@ -113,6 +113,27 @@ Polygons execute(
     return get_polygons_from_tree(solution);
 }
 
+Polygons offset(
+    double miter_limit,
+    double round_precision,
+    JoinType join_type,
+    EndType end_type,
+    Polygon polygon,
+    double delta) {
+  ClipperLib::ClipperOffset c(miter_limit, round_precision);
+
+  Paths paths = get_polygon_paths(polygon);
+  c.AddPaths(
+      paths,
+      ClipperLib::JoinType(join_type),
+      ClipperLib::EndType(end_type)
+  );
+
+  PolyTree solution;
+  c.Execute(solution, delta);
+  return get_polygons_from_tree(solution);
+}
+
 void free_path(Path path)
 {
     delete[] path.vertices;

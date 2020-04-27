@@ -15,6 +15,20 @@ typedef enum ClipType
     ctXor
 } ClipType;
 
+typedef enum JoinType {
+  jtSquare,
+  jtRound,
+  jtMiter
+} JoinType;
+
+typedef enum EndType {
+  etClosedPolygon,
+  etClosedLine,
+  etOpenButt,
+  etOpenSquare,
+  etOpenRound
+} EndType;
+
 typedef enum PolyType
 {
     ptSubject,
@@ -68,6 +82,14 @@ Polygons execute(
     Polygons polygons,
     PolyFillType subject_fill_type,
     PolyFillType clip_fill_type);
+
+Polygons offset(
+    double miter_limit,
+    double round_precision,
+    JoinType join_type,
+    EndType end_type,
+    Polygon polygons,
+    double delta);
 
 void free_path(Path path);
 void free_polygon(Polygon polygon);
