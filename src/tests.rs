@@ -1,6 +1,7 @@
 use super::{
-    execute, free_polygons, ClipType_ctDifference, ClipType_ctIntersection, ClipType_ctUnion, Path,
-    PolyFillType_pftNonZero, PolyType_ptClip, PolyType_ptSubject, Polygon, Polygons,
+    execute, free_polygons, offset, ClipType_ctDifference, ClipType_ctIntersection,
+    ClipType_ctUnion, EndType_etClosedPolygon, JoinType_jtSquare, Path, PolyFillType_pftNonZero,
+    PolyType_ptClip, PolyType_ptSubject, Polygon, Polygons,
 };
 
 #[test]
@@ -157,5 +158,62 @@ fn test_difference() {
     };
 
     assert_eq!(expected, result);
+    unsafe { free_polygons(result) };
+}
+
+#[test]
+fn test_offset() {
+    let polygon = Polygon {
+        type_: PolyType_ptSubject,
+        paths: [Path {
+            vertices: [[100, 100], [100, 200], [200, 200], [200, 100]].as_mut_ptr(),
+            vertices_count: 4,
+            closed: 1,
+        }]
+        .as_mut_ptr(),
+        paths_count: 1,
+    };
+
+    let expected = Polygon {
+        type_: PolyType_ptSubject,
+        paths: [Path {
+            vertices: [
+                [205, 98],
+                [205, 202],
+                [202, 205],
+                [98, 205],
+                [95, 202],
+                [95, 98],
+                [98, 95],
+                [202, 95],
+            ]
+            .as_mut_ptr(),
+            vertices_count: 8,
+            closed: 1,
+        }]
+        .as_mut_ptr(),
+        paths_count: 1,
+    };
+
+    let (result, output) = unsafe {
+        let result = offset(
+            /*miter_limit=*/ 2.0,
+            /*round_precision=*/ 0.25,
+            JoinType_jtSquare,
+            EndType_etClosedPolygon,
+            polygon,
+            5.,
+        );
+
+        let output = std::slice::from_raw_parts(result.polygons, 1)[0];
+
+        (result, output)
+    };
+
+    let paths = unsafe { std::slice::from_raw_parts(output.paths, 1) };
+    let vertices =
+        unsafe { std::slice::from_raw_parts(paths[0].vertices, paths[0].vertices_count as usize) };
+
+    assert_eq!(expected, output, "result vertices: {:?}", vertices);
     unsafe { free_polygons(result) };
 }
