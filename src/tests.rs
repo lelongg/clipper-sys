@@ -163,15 +163,19 @@ fn test_difference() {
 
 #[test]
 fn test_offset() {
-    let polygon = Polygon {
-        type_: PolyType_ptSubject,
-        paths: [Path {
-            vertices: [[100, 100], [100, 200], [200, 200], [200, 100]].as_mut_ptr(),
-            vertices_count: 4,
-            closed: 1,
+    let polygons = Polygons {
+        polygons: [Polygon {
+            type_: PolyType_ptSubject,
+            paths: [Path {
+                vertices: [[100, 100], [100, 200], [200, 200], [200, 100]].as_mut_ptr(),
+                vertices_count: 4,
+                closed: 1,
+            }]
+            .as_mut_ptr(),
+            paths_count: 1,
         }]
         .as_mut_ptr(),
-        paths_count: 1,
+        polygons_count: 1,
     };
 
     let expected = Polygon {
@@ -201,7 +205,7 @@ fn test_offset() {
             /*round_precision=*/ 0.25,
             JoinType_jtSquare,
             EndType_etClosedPolygon,
-            polygon,
+            polygons,
             5.,
         );
 
