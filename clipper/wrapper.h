@@ -88,7 +88,7 @@ Polygons offset(
     double round_precision,
     JoinType join_type,
     EndType end_type,
-    Polygon polygons,
+    Polygons polygons,
     double delta);
 
 void free_path(Path path);
