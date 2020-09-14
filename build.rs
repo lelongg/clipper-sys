@@ -4,10 +4,11 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let clipper = cmake::build("clipper");
-
-    println!("cargo:rustc-link-search=native={}", clipper.display());
-    println!("cargo:rustc-link-lib=static=clipper");
+    cc::Build::new()
+        .cpp(true)
+        .file("clipper/clipper.cpp")
+        .file("clipper/wrapper.cpp")
+        .compile("clipper");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_env = env::var("CARGO_CFG_TARGET_ENV").unwrap();
