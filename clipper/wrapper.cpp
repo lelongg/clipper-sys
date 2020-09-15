@@ -11,7 +11,7 @@ using ClipperLib::PolyTree;
 ClipperLib::Path get_path(const Path& path)
 {
     ClipperLib::Path clipper_path;
-    for (int i = 0; i < path.vertices_count; ++i)
+    for (size_t i = 0; i < path.vertices_count; ++i)
     {
         clipper_path << IntPoint(path.vertices[i][0], path.vertices[i][1]);
     }
@@ -21,7 +21,7 @@ ClipperLib::Path get_path(const Path& path)
 Paths get_polygon_paths(const Polygon& polygon)
 {
     Paths paths(polygon.paths_count);
-    for (int i = 0; i < polygon.paths_count; ++i)
+    for (size_t i = 0; i < polygon.paths_count; ++i)
     {
         paths[i] = get_path(polygon.paths[i]);
     }
@@ -30,11 +30,21 @@ Paths get_polygon_paths(const Polygon& polygon)
 
 void add_paths(ClipperLib::Clipper& c, const Polygons& polygons)
 {
-    for (int i = 0; i < polygons.polygons_count; ++i)
+    for (size_t i = 0; i < polygons.polygons_count; ++i)
     {
         auto& polygon = polygons.polygons[i];
         Paths paths = get_polygon_paths(polygon);
         c.AddPaths(paths, ClipperLib::PolyType(polygon.type), true);
+    }
+}
+
+void add_paths(ClipperLib::ClipperOffset& c, JoinType join_type, EndType end_type, const Polygons& polygons)
+{
+    for (size_t i = 0; i < polygons.polygons_count; ++i)
+    {
+        auto& polygon = polygons.polygons[i];
+        Paths paths = get_polygon_paths(polygon);
+        c.AddPaths(paths, ClipperLib::JoinType(join_type), ClipperLib::EndType(end_type));
     }
 }
 
@@ -44,7 +54,7 @@ Path get_path_from_node(const PolyNode& node)
     path.vertices_count = node.Contour.size();
     path.vertices = new Vertice[path.vertices_count];
     path.closed = !node.IsOpen();
-    for (int i = 0; i < path.vertices_count; ++i)
+    for (size_t i = 0; i < path.vertices_count; ++i)
     {
         path.vertices[i][0] = node.Contour[i].X;
         path.vertices[i][1] = node.Contour[i].Y;
@@ -118,17 +128,11 @@ Polygons offset(
     double round_precision,
     JoinType join_type,
     EndType end_type,
-    Polygon polygon,
-    double delta) {
+    Polygons polygons,
+    double delta)
+{
   ClipperLib::ClipperOffset c(miter_limit, round_precision);
-
-  Paths paths = get_polygon_paths(polygon);
-  c.AddPaths(
-      paths,
-      ClipperLib::JoinType(join_type),
-      ClipperLib::EndType(end_type)
-  );
-
+  add_paths(c, join_type, end_type, polygons);
   PolyTree solution;
   c.Execute(solution, delta);
   return get_polygons_from_tree(solution);
@@ -141,7 +145,7 @@ void free_path(Path path)
 
 void free_polygon(Polygon polygon)
 {
-    for (int i = 0; i < polygon.paths_count; ++i)
+    for (size_t i = 0; i < polygon.paths_count; ++i)
     {
         free_path(polygon.paths[i]);
     }
@@ -150,7 +154,7 @@ void free_polygon(Polygon polygon)
 
 void free_polygons(Polygons polygons)
 {
-    for (int i = 0; i < polygons.polygons_count; ++i)
+    for (size_t i = 0; i < polygons.polygons_count; ++i)
     {
         free_polygon(polygons.polygons[i]);
     }
