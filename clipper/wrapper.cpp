@@ -51,7 +51,6 @@ void add_paths(ClipperLib::ClipperOffset& c, JoinType join_type, EndType end_typ
         auto& polygon = polygons.polygons[i];
         auto paths_closed = get_polygon_paths(polygon);
         Paths &paths = paths_closed.first;
-        std::vector<bool> &closed = paths_closed.second;
         c.AddPaths(paths, ClipperLib::JoinType(join_type), ClipperLib::EndType(end_type));
     }
 }
