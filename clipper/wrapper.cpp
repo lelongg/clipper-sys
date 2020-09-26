@@ -18,14 +18,16 @@ ClipperLib::Path get_path(const Path& path)
     return clipper_path;
 }
 
-Paths get_polygon_paths(const Polygon& polygon)
+std::pair<Paths, std::vector<bool>> get_polygon_paths(const Polygon& polygon)
 {
     Paths paths(polygon.paths_count);
+    std::vector<bool> closed(polygon.paths_count);
     for (size_t i = 0; i < polygon.paths_count; ++i)
     {
         paths[i] = get_path(polygon.paths[i]);
+        closed[i] = polygon.paths[i].closed;
     }
-    return paths;
+    return std::make_pair(paths, closed);
 }
 
 void add_paths(ClipperLib::Clipper& c, const Polygons& polygons)
@@ -33,8 +35,12 @@ void add_paths(ClipperLib::Clipper& c, const Polygons& polygons)
     for (size_t i = 0; i < polygons.polygons_count; ++i)
     {
         auto& polygon = polygons.polygons[i];
-        Paths paths = get_polygon_paths(polygon);
-        c.AddPaths(paths, ClipperLib::PolyType(polygon.type), true);
+        auto paths_closed = get_polygon_paths(polygon);
+        Paths &paths = paths_closed.first;
+        std::vector<bool> &closed = paths_closed.second;
+        for (size_t i = 0; i < paths.size(); ++i) {
+          c.AddPath(paths[i], ClipperLib::PolyType(polygon.type), closed[i]);
+        }
     }
 }
 
@@ -43,7 +49,8 @@ void add_paths(ClipperLib::ClipperOffset& c, JoinType join_type, EndType end_typ
     for (size_t i = 0; i < polygons.polygons_count; ++i)
     {
         auto& polygon = polygons.polygons[i];
-        Paths paths = get_polygon_paths(polygon);
+        auto paths_closed = get_polygon_paths(polygon);
+        Paths &paths = paths_closed.first;
         c.AddPaths(paths, ClipperLib::JoinType(join_type), ClipperLib::EndType(end_type));
     }
 }
