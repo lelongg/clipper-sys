@@ -5,6 +5,7 @@ fn main() {
         .cpp(true)
         .file("clipper/clipper.cpp")
         .file("clipper/wrapper.cpp")
+        .flag("-std=c++11")
         .compile("clipper");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
