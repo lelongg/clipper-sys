@@ -69,6 +69,34 @@ Path get_path_from_node(const PolyNode& node)
     return path;
 }
 
+Path get_path_from_closed_clipperlib_path(ClipperLib::Path &clipper_path)
+{
+    Path path;
+    path.vertices_count = clipper_path.size();
+    path.vertices = new Vertice[path.vertices_count];
+    path.closed = true;
+    for (size_t i = 0; i < path.vertices_count; ++i)
+    {
+        path.vertices[i][0] = clipper_path[i].X;
+        path.vertices[i][1] = clipper_path[i].Y;
+    }
+    return path;
+}
+
+Polygon get_polygon_from_closed_clipperlib_paths(ClipperLib::Paths &clipper_paths)
+{
+    Polygon polygon;
+    polygon.type = ptSubject;
+    polygon.paths_count = clipper_paths.size();
+    polygon.paths = new Path[polygon.paths_count];
+    for (int i = 0; i < polygon.paths_count; ++i)
+    {
+        polygon.paths[i] = get_path_from_closed_clipperlib_path(clipper_paths[i]);
+    }
+
+    return polygon;
+}
+
 Polygon get_polygon_from_node(
     const PolyNode* node, std::queue<const PolyNode*>& node_queue)
 {
