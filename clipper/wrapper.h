@@ -91,6 +91,14 @@ Polygons offset(
     Polygons polygons,
     double delta);
 
+    Polygons simplify(
+        Polygons polygons,
+        PolyFillType fill_type);
+
+    Polygons clean(
+        Polygons polygons,
+        double distance);
+
 void free_path(Path path);
 void free_polygon(Polygon polygon);
 void free_polygons(Polygons polygons);

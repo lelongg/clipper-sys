@@ -35,6 +35,8 @@ fn main() {
         .whitelist_type("Vertice")
         .whitelist_type("Path")
         .whitelist_type("Polygon")
+        .whitelist_function("clean")
+        .whitelist_function("simplify")
         .whitelist_function("execute")
         .whitelist_function("offset")
         .whitelist_function("free_path")
