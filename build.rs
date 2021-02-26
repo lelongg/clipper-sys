@@ -6,6 +6,7 @@ use std::path::PathBuf;
 fn main() {
     cc::Build::new()
         .cpp(true)
+        .opt_level(3)
         .file("clipper/clipper.cpp")
         .file("clipper/wrapper.cpp")
         .compile("clipper");
