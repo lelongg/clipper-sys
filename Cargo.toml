@@ -12,5 +12,5 @@ keywords = ["polygon", "boolean", "clip", "clipper"]
 categories = ["algorithms", "external-ffi-bindings"]
 
 [build-dependencies]
-bindgen = "0.56.0"
+bindgen = "0.57.0"
 cc = "1.0.59"
