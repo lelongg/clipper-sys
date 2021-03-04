@@ -11,21 +11,27 @@ using ClipperLib::PolyTree;
 ClipperLib::Path get_path(const Path& path)
 {
     ClipperLib::Path clipper_path;
+    clipper_path.reserve(path.vertices_count);
+
     for (size_t i = 0; i < path.vertices_count; ++i)
     {
-        clipper_path << IntPoint(path.vertices[i][0], path.vertices[i][1]);
+        clipper_path.push_back(IntPoint(path.vertices[i][0], path.vertices[i][1]));
     }
     return clipper_path;
 }
 
 std::pair<Paths, std::vector<bool>> get_polygon_paths(const Polygon& polygon)
 {
-    Paths paths(polygon.paths_count);
-    std::vector<bool> closed(polygon.paths_count);
+    Paths paths;
+    paths.reserve(polygon.paths_count);
+
+    std::vector<bool> closed;
+    closed.reserve(polygon.paths_count);
+
     for (size_t i = 0; i < polygon.paths_count; ++i)
     {
-        paths[i] = get_path(polygon.paths[i]);
-        closed[i] = polygon.paths[i].closed;
+        paths.push_back(get_path(polygon.paths[i]));
+        closed.push_back(polygon.paths[i].closed);
     }
     return std::make_pair(paths, closed);
 }
@@ -89,7 +95,7 @@ Polygon get_polygon_from_closed_clipperlib_paths(ClipperLib::Paths &clipper_path
     polygon.type = ptSubject;
     polygon.paths_count = clipper_paths.size();
     polygon.paths = new Path[polygon.paths_count];
-    for (uint i = 0; i < polygon.paths_count; ++i)
+    for (size_t i = 0; i < polygon.paths_count; ++i)
     {
         polygon.paths[i] = get_path_from_closed_clipperlib_path(clipper_paths[i]);
     }
@@ -175,24 +181,15 @@ Polygons offset(
 
 Polygons simplify(Polygons polygons, PolyFillType fill_type)
 {
-    std::vector<Polygon> polygon_vector;
-
-    for (size_t i = 0; i < polygons.polygons_count; ++i)
-    {
-        auto &polygon = polygons.polygons[i];
-        auto paths_closed = get_polygon_paths(polygon);
-        Paths &paths = paths_closed.first;
-        SimplifyPolygons(paths, ClipperLib::PolyFillType(fill_type));
-        Polygon poly = get_polygon_from_closed_clipperlib_paths(paths);
-        polygon_vector.push_back(poly);
-    }
-
-    Polygons simplified_polys;
-    simplified_polys.polygons_count = polygon_vector.size();
-    simplified_polys.polygons = new Polygon[simplified_polys.polygons_count];
-    std::copy(polygon_vector.begin(), polygon_vector.end(), simplified_polys.polygons);
-
-    return simplified_polys;
+    ClipperLib::Clipper c;
+    add_paths(c, polygons);
+    c.StrictlySimple(true);
+    PolyTree solution;
+    c.Execute(
+        ClipperLib::ClipType::ctUnion, solution,
+        ClipperLib::PolyFillType(fill_type),
+        ClipperLib::PolyFillType(fill_type));
+    return get_polygons_from_tree(solution);
 }
 
 Polygons clean(Polygons polygons, double distance)
