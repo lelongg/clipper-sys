@@ -11,21 +11,27 @@ using ClipperLib::PolyTree;
 ClipperLib::Path get_path(const Path& path)
 {
     ClipperLib::Path clipper_path;
+    clipper_path.reserve(path.vertices_count);
+
     for (size_t i = 0; i < path.vertices_count; ++i)
     {
-        clipper_path << IntPoint(path.vertices[i][0], path.vertices[i][1]);
+        clipper_path.push_back(IntPoint(path.vertices[i][0], path.vertices[i][1]));
     }
     return clipper_path;
 }
 
 std::pair<Paths, std::vector<bool>> get_polygon_paths(const Polygon& polygon)
 {
-    Paths paths(polygon.paths_count);
-    std::vector<bool> closed(polygon.paths_count);
+    Paths paths;
+    paths.reserve(polygon.paths_count);
+
+    std::vector<bool> closed;
+    closed.reserve(polygon.paths_count);
+
     for (size_t i = 0; i < polygon.paths_count; ++i)
     {
-        paths[i] = get_path(polygon.paths[i]);
-        closed[i] = polygon.paths[i].closed;
+        paths.push_back(get_path(polygon.paths[i]));
+        closed.push_back(polygon.paths[i].closed);
     }
     return std::make_pair(paths, closed);
 }
