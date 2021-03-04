@@ -4,7 +4,7 @@
 #![allow(dead_code)]
 #![allow(clippy::unreadable_literal)]
 
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!("bindings.rs");
 
 impl Path {
     pub fn vertices(&self) -> &[[i64; 2]] {
