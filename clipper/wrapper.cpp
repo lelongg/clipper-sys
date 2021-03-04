@@ -95,7 +95,7 @@ Polygon get_polygon_from_closed_clipperlib_paths(ClipperLib::Paths &clipper_path
     polygon.type = ptSubject;
     polygon.paths_count = clipper_paths.size();
     polygon.paths = new Path[polygon.paths_count];
-    for (uint i = 0; i < polygon.paths_count; ++i)
+    for (size_t i = 0; i < polygon.paths_count; ++i)
     {
         polygon.paths[i] = get_path_from_closed_clipperlib_path(clipper_paths[i]);
     }
