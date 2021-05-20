@@ -92,6 +92,23 @@ Path get_path_from_closed_path(ClipperLib::Path &clipper_path)
     return path;
 }
 
+ClipperLib::Paths get_closed_paths_from_polygons(Polygons polygons)
+{
+    Paths paths;
+
+    for (size_t i = 0; i < polygons.polygons_count; ++i)
+    {
+        auto &polygon = polygons.polygons[i];
+        auto paths_closed = get_polygon_paths(polygon);
+        Paths &next_paths = paths_closed.first;
+
+        paths.reserve(paths.size() + next_paths.size());
+        paths.insert(paths.end(), next_paths.begin(), next_paths.end());
+    }
+
+    return paths;
+}
+
 Polygons get_polygons_from_closed_paths(ClipperLib::Paths &closed_paths)
 {
     std::vector<Polygon> polygon_vector;
@@ -246,37 +263,16 @@ Polygons offset(
 
 Polygons simplify(Polygons polygons, PolyFillType fill_type)
 {
-    ClipperLib::Clipper c;
-    add_paths(c, polygons);
-    c.StrictlySimple(true);
-    PolyTree solution;
-    c.Execute(
-        ClipperLib::ClipType::ctUnion, solution,
-        ClipperLib::PolyFillType(fill_type),
-        ClipperLib::PolyFillType(fill_type));
-    return get_polygons_from_tree(solution);
+    Paths paths = get_closed_paths_from_polygons(polygons);
+    SimplifyPolygons(paths, ClipperLib::PolyFillType(fill_type));
+    return get_polygons_from_closed_paths(paths);
 }
 
 Polygons clean(Polygons polygons, double distance)
 {
-    std::vector<Polygon> polygon_vector;
-
-    for (size_t i = 0; i < polygons.polygons_count; ++i)
-    {
-        auto &polygon = polygons.polygons[i];
-        auto paths_closed = get_polygon_paths(polygon);
-        Paths &paths = paths_closed.first;
-        CleanPolygons(paths, distance);
-        Polygon poly = get_polygon_from_closed_clipperlib_paths(paths);
-        polygon_vector.push_back(poly);
-    }
-
-    Polygons cleaned_polys;
-    cleaned_polys.polygons_count = polygon_vector.size();
-    cleaned_polys.polygons = new Polygon[cleaned_polys.polygons_count];
-    std::copy(polygon_vector.begin(), polygon_vector.end(), cleaned_polys.polygons);
-
-    return cleaned_polys;
+    Paths paths = get_closed_paths_from_polygons(polygons);
+    CleanPolygons(paths, distance);
+    return get_polygons_from_closed_paths(paths);
 }
 
 void free_path(Path path)
