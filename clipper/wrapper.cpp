@@ -78,7 +78,7 @@ Path get_path_from_node(const PolyNode &node)
     return path;
 }
 
-Path get_path_from_closed_clipperlib_path(ClipperLib::Path &clipper_path)
+Path get_path_from_closed_path(ClipperLib::Path &clipper_path)
 {
     Path path;
     path.vertices_count = clipper_path.size();
@@ -92,18 +92,26 @@ Path get_path_from_closed_clipperlib_path(ClipperLib::Path &clipper_path)
     return path;
 }
 
-Polygon get_polygon_from_closed_clipperlib_paths(ClipperLib::Paths &clipper_paths)
+Polygons get_polygons_from_closed_paths(ClipperLib::Paths &closed_paths)
 {
-    Polygon polygon;
-    polygon.type = ptSubject;
-    polygon.paths_count = clipper_paths.size();
-    polygon.paths = new Path[polygon.paths_count];
-    for (size_t i = 0; i < polygon.paths_count; ++i)
+    std::vector<Polygon> polygon_vector;
+
+    for (size_t i = 0; i < closed_paths.size(); ++i)
     {
-        polygon.paths[i] = get_path_from_closed_clipperlib_path(clipper_paths[i]);
+        Polygon polygon;
+        polygon.type = ptSubject;
+        polygon.paths_count = 1;
+        polygon.paths = new Path[1];
+        polygon.paths[0] = get_path_from_closed_path(closed_paths[i]);
+        polygon_vector.push_back(polygon);
     }
 
-    return polygon;
+    Polygons polygons;
+    polygons.polygons_count = polygon_vector.size();
+    polygons.polygons = new Polygon[polygons.polygons_count];
+    std::copy(polygon_vector.begin(), polygon_vector.end(), polygons.polygons);
+
+    return polygons;
 }
 
 Polygon get_polygon_from_node(
@@ -167,41 +175,46 @@ Polygons execute(
     return get_polygons_from_tree(solution);
 }
 
-// Polygons offset_simplify_clean(
-//     Polygons polygons,
-//     double miter_limit,
-//     double round_precision,
-//     JoinType join_type,
-//     EndType end_type,
-//     double delta,
-//     bool do_simplify,
-//     PolyFillType fill_type,
-//     bool do_clean,
-//     double distance)
-// {
-//     // Fix orientation of closed paths
-//     ClipperLib::Clipper c;
-//     add_paths(c, polygons);
-//     PolyTree solution;
-//     c.Execute(
-//         ClipperLib::ClipType::ctDifference,
-//         solution,
-//         ClipperLib::PolyFillType::pftEvenOdd,
-//         ClipperLib::PolyFillType::pftEvenOdd);
-//     PolyNode *node = solution.GetFirst();
-//     // Reverse paths with wrong direction
-//     while (node)
-//     {
-//         if (node->IsHole())
-//         {
-//             ReversePath(node->Contour);
-//         }
-//         // Go to next node
-//         node = node->GetNext();
-//     }
-//     Paths paths;
-//     PolyTreeToPaths(solution, paths);
-// }
+Polygons offset_simplify_clean(
+    Polygons polygons,
+    double miter_limit,
+    double round_precision,
+    JoinType join_type,
+    EndType end_type,
+    double delta,
+    PolyFillType fill_type,
+    double distance)
+{
+    // Fix orientation of closed paths
+    ClipperLib::Clipper c_clipper;
+    add_paths(c_clipper, polygons);
+    PolyTree solution_clipper;
+    c_clipper.Execute(
+        ClipperLib::ClipType::ctDifference,
+        solution_clipper,
+        ClipperLib::PolyFillType::pftEvenOdd,
+        ClipperLib::PolyFillType::pftEvenOdd);
+    Paths paths_orient;
+    PolyTreeToPaths(solution_clipper, paths_orient);
+
+    // Offset closed paths
+    ClipperLib::ClipperOffset c_off(miter_limit, round_precision);
+    c_off.AddPaths(paths_orient, ClipperLib::JoinType(join_type), ClipperLib::EndType(end_type));
+    PolyTree solution_off;
+    c_off.Execute(solution_off, delta);
+    Paths paths_off;
+    PolyTreeToPaths(solution_off, paths_off);
+
+    // Simplify overlapping or touching paths
+    Paths paths_simpl;
+    SimplifyPolygons(paths_off, paths_simpl, ClipperLib::PolyFillType(fill_type));
+
+    // Clean polygons
+    Paths paths_clean;
+    CleanPolygons(paths_simpl, paths_clean, distance);
+
+    return get_polygons_from_closed_paths(paths_clean);
+}
 
 Polygons offset(
     double miter_limit,
@@ -220,24 +233,14 @@ Polygons offset(
         solution_clipper,
         ClipperLib::PolyFillType::pftEvenOdd,
         ClipperLib::PolyFillType::pftEvenOdd);
-    PolyNode *node = solution_clipper.GetFirst();
-    // Reverse paths with wrong direction
-    // while (node)
-    // {
-    //     if (node->IsHole())
-    //     {
-    //         ReversePath(node->Contour);
-    //     }
-    //     // Go to next node
-    //     node = node->GetNext();
-    // }
     Paths paths;
     PolyTreeToPaths(solution_clipper, paths);
-
+    // Offset closed paths
     ClipperLib::ClipperOffset c_off(miter_limit, round_precision);
     c_off.AddPaths(paths, ClipperLib::JoinType(join_type), ClipperLib::EndType(end_type));
     PolyTree solution_off;
     c_off.Execute(solution_off, delta);
+
     return get_polygons_from_tree(solution_off);
 }
 
