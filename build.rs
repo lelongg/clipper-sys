@@ -44,6 +44,7 @@ fn main() {
             .allowlist_function("simplify")
             .allowlist_function("execute")
             .allowlist_function("offset")
+            .allowlist_function("offset_simplify_clean")
             .allowlist_function("free_path")
             .allowlist_function("free_polygon")
             .allowlist_function("free_polygons")
