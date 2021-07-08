@@ -20,7 +20,7 @@ ClipperLib::Path get_path(const Path& path)
     return clipper_path;
 }
 
-std::pair<Paths, std::vector<bool>> get_polygon_paths(const Polygon& polygon)
+std::pair<Paths, std::vector<bool> > get_polygon_paths(const Polygon& polygon)
 {
     Paths paths;
     paths.reserve(polygon.paths_count);
