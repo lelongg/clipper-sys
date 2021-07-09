@@ -1,7 +1,4 @@
-extern crate bindgen;
-
 use std::env;
-use std::path::PathBuf;
 
 fn main() {
     cc::Build::new()
@@ -24,7 +21,13 @@ fn main() {
             target_env.as_str()
         ),
     }
+    
+    #[cfg(feature = "generate-bindings")]
+    generate_bindings();
+}
 
+#[cfg(feature = "generate-bindings")]
+fn generate_bindings() {
     let bindings = bindgen::Builder::default()
         .header("clipper/wrapper.h")
         .allowlist_type("Polygons")
@@ -46,7 +49,7 @@ fn main() {
         .generate()
         .expect("unable to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_path = std::path::PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("couldn't write bindings!");

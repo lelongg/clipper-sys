@@ -11,6 +11,9 @@ description = "Boolean operations on polygons (Clipper wrapper)"
 keywords = ["polygon", "boolean", "clip", "clipper"]
 categories = ["algorithms", "external-ffi-bindings"]
 
+[features]
+generate-bindings = [ "bindgen"]
+
 [build-dependencies]
-bindgen = "0.58.1"
+bindgen = { version = "0.58.1", optional = true }
 cc = "1.0.59"
