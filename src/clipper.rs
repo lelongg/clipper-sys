@@ -4,7 +4,11 @@
 #![allow(dead_code)]
 #![allow(clippy::unreadable_literal)]
 
+#[cfg(feature = "generate-bindings")]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+#[cfg(not(feature = "generate-bindings"))]
+include!("../generated/bindings.rs");
 
 impl Path {
     pub fn vertices(&self) -> &[[i64; 2]] {
