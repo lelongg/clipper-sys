@@ -13,6 +13,7 @@ categories = ["algorithms", "external-ffi-bindings"]
 
 [features]
 generate-bindings = [ "bindgen"]
+update-bindings = [ "generate-bindings"]
 
 [build-dependencies]
 bindgen = { version = "0.58.1", optional = true }

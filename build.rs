@@ -1,6 +1,11 @@
 use std::env;
 
 fn main() {
+    println!("cargo:rerun-if-changed=clipper");
+    if cfg!(feature = "update-bindings") {
+        println!("cargo:rerun-if-changed=generated");
+    }
+
     cc::Build::new()
         .cpp(true)
         .opt_level(3)
@@ -21,36 +26,38 @@ fn main() {
             target_env.as_str()
         ),
     }
-    
+
     #[cfg(feature = "generate-bindings")]
-    generate_bindings();
-}
+    {
+        let bindings = bindgen::Builder::default()
+            .header("clipper/wrapper.h")
+            .allowlist_type("Polygons")
+            .allowlist_type("ClipType")
+            .allowlist_type("JoinType")
+            .allowlist_type("EndType")
+            .allowlist_type("PolyType")
+            .allowlist_type("PolyFillType")
+            .allowlist_type("Vertice")
+            .allowlist_type("Path")
+            .allowlist_type("Polygon")
+            .allowlist_function("clean")
+            .allowlist_function("simplify")
+            .allowlist_function("execute")
+            .allowlist_function("offset")
+            .allowlist_function("free_path")
+            .allowlist_function("free_polygon")
+            .allowlist_function("free_polygons")
+            .generate()
+            .expect("unable to generate bindings");
 
-#[cfg(feature = "generate-bindings")]
-fn generate_bindings() {
-    let bindings = bindgen::Builder::default()
-        .header("clipper/wrapper.h")
-        .allowlist_type("Polygons")
-        .allowlist_type("ClipType")
-        .allowlist_type("JoinType")
-        .allowlist_type("EndType")
-        .allowlist_type("PolyType")
-        .allowlist_type("PolyFillType")
-        .allowlist_type("Vertice")
-        .allowlist_type("Path")
-        .allowlist_type("Polygon")
-        .allowlist_function("clean")
-        .allowlist_function("simplify")
-        .allowlist_function("execute")
-        .allowlist_function("offset")
-        .allowlist_function("free_path")
-        .allowlist_function("free_polygon")
-        .allowlist_function("free_polygons")
-        .generate()
-        .expect("unable to generate bindings");
+        let out_path = if cfg!(feature = "update-bindings") {
+            std::path::PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("generated")
+        } else {
+            std::path::PathBuf::from(env::var("OUT_DIR").unwrap())
+        };
 
-    let out_path = std::path::PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("couldn't write bindings!");
+        bindings
+            .write_to_file(out_path.join("bindings.rs"))
+            .expect("couldn't write bindings!");
+    }
 }

@@ -4,11 +4,14 @@
 #![allow(dead_code)]
 #![allow(clippy::unreadable_literal)]
 
-#[cfg(feature = "generate-bindings")]
+#[cfg(all(not(feature = "update-bindings"), feature = "generate-bindings"))]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-#[cfg(not(feature = "generate-bindings"))]
-include!("../generated/bindings.rs");
+#[cfg(any(feature = "update-bindings", not(feature = "generate-bindings")))]
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/generated/bindings.rs"
+));
 
 impl Path {
     pub fn vertices(&self) -> &[[i64; 2]] {
