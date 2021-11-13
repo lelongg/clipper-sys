@@ -47,6 +47,7 @@ fn main() {
             .allowlist_function("free_path")
             .allowlist_function("free_polygon")
             .allowlist_function("free_polygons")
+            .size_t_is_usize(true)
             .generate()
             .expect("unable to generate bindings");
 
