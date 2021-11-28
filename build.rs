@@ -30,7 +30,7 @@ fn main() {
     #[cfg(feature = "generate-bindings")]
     {
         let bindings = bindgen::Builder::default()
-            .header("clipper/wrapper.h")
+            .header("clipper/wrapper.hpp")
             .allowlist_type("Polygons")
             .allowlist_type("ClipType")
             .allowlist_type("JoinType")
@@ -44,6 +44,7 @@ fn main() {
             .allowlist_function("simplify")
             .allowlist_function("execute")
             .allowlist_function("offset")
+            .allowlist_function("offset_simplify_clean")
             .allowlist_function("free_path")
             .allowlist_function("free_polygon")
             .allowlist_function("free_polygons")

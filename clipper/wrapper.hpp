@@ -83,6 +83,16 @@ Polygons execute(
     PolyFillType subject_fill_type,
     PolyFillType clip_fill_type);
 
+Polygons offset_simplify_clean(
+    Polygons polygons,
+    double miter_limit,
+    double round_precision,
+    JoinType join_type,
+    EndType end_type,
+    double delta,
+    PolyFillType fill_type = PolyFillType::pftEvenOdd,
+    double distance = 0.5);
+
 Polygons offset(
     double miter_limit,
     double round_precision,
@@ -91,13 +101,13 @@ Polygons offset(
     Polygons polygons,
     double delta);
 
-    Polygons simplify(
-        Polygons polygons,
-        PolyFillType fill_type);
+Polygons simplify(
+    Polygons polygons,
+    PolyFillType fill_type);
 
-    Polygons clean(
-        Polygons polygons,
-        double distance);
+Polygons clean(
+    Polygons polygons,
+    double distance);
 
 void free_path(Path path);
 void free_polygon(Polygon polygon);
