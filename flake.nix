@@ -14,7 +14,7 @@
         };
       in with pkgs; {
         devShell = mkShell {
-          buildInputs = [ clang openssl pkgconfig rustStable ];
+          buildInputs = [ clang openssl pkgconfig rustStable cargo-release ];
           LIBCLANG_PATH = "${llvmPackages.libclang}/lib";
         };
       });
