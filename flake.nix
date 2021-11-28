@@ -9,7 +9,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        rustStable = pkgs.rust-bin.stable."1.56.0".minimal.override {
+        rustStable = pkgs.rust-bin.stable.latest.minimal.override {
           extensions = [ "rust-src" "clippy" "rustfmt" ];
         };
       in with pkgs; {
