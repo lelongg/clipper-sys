@@ -11,6 +11,7 @@ fn main() {
         .opt_level(3)
         .file("clipper/clipper.cpp")
         .file("clipper/wrapper.cpp")
+        .flag_if_supported("-std=c++14")
         .compile("clipper");
 
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
